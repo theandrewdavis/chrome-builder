@@ -6,6 +6,7 @@ import re
 import shutil
 import stat
 import subprocess
+import sys
 import time
 
 if platform.system() == 'Windows':
@@ -13,6 +14,13 @@ if platform.system() == 'Windows':
 	USB_ROOT = 'I:\\chrome'
 	BUILD_ROOT = 'F:\\docker-home'
 	SAVE_ROOT = 'F:\\docker-home\\chrome'
+
+	try:
+		import requests
+	except ImportError:
+		print('Failed to import requests, retry with: .\\venv\\Scripts\\python.exe chrome.py ...', file=sys.stderr)
+		exit()
+
 else:
 	ONLINE = False
 	USB_ROOT = '/media/andrew/cactus/chrome'
@@ -60,8 +68,6 @@ def version_key(s):
 	return result
 
 def fetch_versions(channel, include_old=False):
-	import requests
-
 	url = f'https://versionhistory.googleapis.com/v1/chrome/platforms/android/channels/{channel}/versions/all/releases'
 	if not include_old:
 		url = url + '?filter=endtime=none'
