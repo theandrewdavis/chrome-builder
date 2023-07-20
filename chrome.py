@@ -229,6 +229,9 @@ def copy_offline_apks_to_usb(version=None):
 		if not has_files(save_dir, IDB_FILES):
 			continue
 
+		if not has_files(usb_dir, SOURCE_FILES):
+			continue
+
 		if has_files(usb_dir, IDB_FILES):
 			continue
 
