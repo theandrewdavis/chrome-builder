@@ -5,9 +5,13 @@ set -xeuEo pipefail
 cd /home
 tar xzf chromium.tgz
 tar xzf depot_tools.tgz
+if [ -f vpython_root.tgz ]; then
+	tar xzf vpython_root.tgz
+fi
 cd chromium/src
 
 export PATH=$PATH:/home/depot_tools
+export VPYTHON_VIRTUALENV_ROOT=/home/.vpython-root
 
 mkdir -p out/arm64
 cat - > out/arm64/args.gn <<EOF

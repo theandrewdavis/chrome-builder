@@ -285,6 +285,9 @@ def build(version):
 	for filename in SOURCE_FILES:
 		os.remove(os.path.join(build_dir, filename))
 
+	if os.path.exists(os.path.join(build_dir, 'vpython_root.tgz')):
+		os.remove(os.path.join(build_dir, 'vpython_root.tgz'))
+
 	os.remove(script_dst)
 
 	shell(f'idat -A -L{SCRIPT_DIR}/ida64.log -S{SCRIPT_DIR}/create_idb.idc {save_dir}/libmonochrome64.so')

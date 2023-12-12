@@ -16,6 +16,14 @@ if [ ! -d "/home/depot_tools" ]; then
 fi
 export PATH=$PATH:/home/depot_tools
 
+# When using newer depot_tools, .vpython-root needs to be copied too, see:
+# https://source.chromium.org/chromium/infra/infra/+/4c112ed5db07967f2b87e562255e9c24b02c0ada
+
+export VPYTHON_VIRTUALENV_ROOT=/home/.vpython-root
+if [ -d $VPYTHON_VIRTUALENV_ROOT ]; then
+	rm -r -f $VPYTHON_VIRTUALENV_ROOT
+fi
+
 #
 # Checkout chromium and save it to /home/chrome/$VERSION/chromium.tgz
 #
@@ -36,6 +44,7 @@ cd /home
 mkdir -p chrome/$VERSION
 tar czf chrome/$VERSION/chromium.tgz --exclude=.git chromium
 tar czf chrome/$VERSION/depot_tools.tgz --exclude=.git depot_tools
+tar czf chrome/$VERSION/vpython_root.tgz .vpython-root
 
 #
 # Install dependencies
@@ -61,7 +70,3 @@ if [ $MAJOR -le 110 ]; then
 else
 	./build/install-build-deps.sh --android --no-chromeos-fonts
 fi
-
-# I don't think these are loaded when the entrypoint isn't bash
-# echo "export VERSION=$VERSION" >> /root/.bashrc
-# echo 'export PATH=$PATH:/home/chrome/$VERSION/depot_tools' >> /root/.bashrc
