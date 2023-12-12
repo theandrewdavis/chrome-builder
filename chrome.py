@@ -124,51 +124,6 @@ def find_new_stable_versions():
 
 	return new_versions
 
-def remove_readonly(func, path, excinfo):
-	os.chmod(path, stat.S_IWRITE)
-	func(path)
-
-def delete_old_versions():
-	if ONLINE:
-		root_dir = SAVE_ROOT
-	else:
-		root_dir = BUILD_ROOT
-
-	keep = set()
-	latest_stable = None
-	saved_versions = set(collect_versions(root_dir))
-
-	# Online, keep all stable versions. Offline, keep only the latest
-
-	version_history = set(load_version_history())
-	stables = saved_versions.intersection(version_history)
-	if len(stables) > 0:
-		latest_stable = max(stables, key=version_key)
-		if ONLINE:
-			keep.update(stables)
-		else:
-			keep.add(latest_stable)
-
-	# Online, keep all the canaries newer than the latest stable. Offline, keep
-	# only the latest
-
-	canaries = saved_versions - stables
-	if len(canaries) > 0:
-		if ONLINE and latest_stable is None:
-			keep.update(canaries)
-		elif ONLINE:
-			keep.update([v for v in canaries if version_key(v) > version_key(latest_stable)])
-		else:
-			latest_canary = max(canaries, key=version_key)
-			keep.add(latest_canary)
-
-	for version in sorted(saved_versions - keep, key=version_key):
-		if ONLINE:
-			print(f'Deleting {version}')
-		else:
-			print(f'Deleting {version} build directory')
-		shutil.rmtree(os.path.join(root_dir, version), onerror=remove_readonly)
-
 def collect_versions(default_dir, version=None):
 	versions = []
 	if version is None:
@@ -338,7 +293,6 @@ def build(version):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--sync', action='store_true', help='Sync files to and from USB')
-	parser.add_argument('--clean', action='store_true', help='Delete old chrome versions')
 	if ONLINE:
 		parser.add_argument('--download', metavar='VERSION', help='Download source for a version of Chromium')
 	else:
@@ -372,39 +326,3 @@ if __name__ == '__main__':
 			copy_usb_source_to_offline()
 
 		exit()
-
-	if args.clean:
-		if ONLINE:
-			update_version_history()
-
-		if not has_version_history():
-			print('No chrome version history', file=sys.stderr)
-			exit()
-
-		delete_old_versions()
-		exit()
-
-	if ONLINE:
-		copy_usb_apks_to_online()
-		copy_online_source_to_usb()
-		update_version_history()
-		delete_old_versions()
-		new_stables = find_new_stable_versions()
-		for version in new_stables:
-			download(version)
-			copy_online_source_to_usb(version)
-		if len(new_stables) > 0:
-			canary = download('canary')
-			copy_online_source_to_usb(canary)
-
-	if not ONLINE:
-		copy_offline_apks_to_usb()
-		copy_usb_source_to_offline()
-		delete_old_versions()
-		for version in collect_versions(USB_ROOT):
-			if has_files(os.path.join(USB_ROOT, version), IDB_FILES):
-				continue
-			print(f'Building {version}')
-			build(version)
-			copy_offline_apks_to_usb(version)
-			delete_old_versions()

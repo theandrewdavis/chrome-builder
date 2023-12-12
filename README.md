@@ -10,8 +10,6 @@ On my offline Linux machine:
 - Builds chromium and produces apks and libchrome.so with symbols
 - Creates idb files for libchrome.so
 - Copies the results to a USB drive
-- Deletes old build directories and old canary apks
 
 Back on my online Windows machine:
 - Copies the apks and idbs for storage
-- Deletes old canary apks
