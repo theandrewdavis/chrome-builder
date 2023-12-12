@@ -292,7 +292,7 @@ def download(version):
 	shutil.copy(script_src, script_dst)
 
 	shell('docker image pull ubuntu:20.04')
-	shell(f'docker container run --name {name} --env VERSION={version} --mount type=bind,source={BUILD_ROOT},target=/home ubuntu:20.04 /home/download.sh')
+	shell(f'docker container run --name {name} --env VERSION={version} --mount type=bind,source={BUILD_ROOT},target=/home -e HOME=/home ubuntu:20.04 /home/download.sh')
 	shell(f'docker container commit {name} {name}')
 	shell(f'docker image save -o {save_dir}\\docker.tar {name}')
 	shell(f'docker container rm {name}')
@@ -321,7 +321,7 @@ def build(version):
 	shutil.copy(script_src, script_dst)
 
 	shell(f'docker load -i {build_dir}/docker.tar')
-	shell(f'docker container run --rm --user {user} --mount type=bind,source={build_dir},target=/home {name} /home/build.sh')
+	shell(f'docker container run --rm --user {user} --mount type=bind,source={build_dir},target=/home -e HOME=/home {name} /home/build.sh')
 	shell(f'docker image rm {name}')
 
 	copy_dir(os.path.join(build_dir, 'save'), save_dir)
