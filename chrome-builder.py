@@ -1,9 +1,11 @@
 import argparse
+import http.client
 import json
 import os
 import platform
 import re
 import shutil
+import ssl
 import stat
 import subprocess
 import sys
@@ -14,12 +16,6 @@ if platform.system() == 'Windows':
 	USB_ROOT = 'I:\\chrome'
 	BUILD_ROOT = 'F:\\docker-home'
 	SAVE_ROOT = 'F:\\docker-home\\chrome'
-
-	try:
-		import requests
-	except ImportError:
-		print('Failed to import requests, retry with: .\\venv\\Scripts\\python.exe chrome.py ...', file=sys.stderr)
-		exit()
 
 else:
 	ONLINE = False
@@ -68,14 +64,19 @@ def version_key(s):
 	return result
 
 def fetch_versions(channel, include_old=False):
-	url = f'https://versionhistory.googleapis.com/v1/chrome/platforms/android/channels/{channel}/versions/all/releases'
+	url_host = 'versionhistory.googleapis.com'
+	url_path = f'/v1/chrome/platforms/android/channels/{channel}/versions/all/releases'
 	if not include_old:
-		url = url + '?filter=endtime=none'
-	r = requests.get(url)
-	if r.status_code != 200:
-		raise Exception(f'Version history api returned status code {r.status_code}')
+		url_path = url_path + '?filter=endtime=none'
 
-	response = json.loads(r.content)
+	conn = http.client.HTTPSConnection(url_host, context=ssl._create_unverified_context())
+	conn.request('GET', url_path)
+	r = conn.getresponse()
+
+	if r.status != 200:
+		raise Exception(f'Version history api returned status code {r.status}')
+
+	response = json.loads(r.read())
 	if 'releases' not in response or len(response['releases']) < 1:
 		raise Exception(f'Version history response error: "releases" not found')
 
