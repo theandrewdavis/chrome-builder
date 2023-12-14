@@ -17,11 +17,21 @@ if platform.system() == 'Windows':
 	BUILD_ROOT = 'F:\\docker-home'
 	SAVE_ROOT = 'F:\\docker-home\\chrome'
 
-else:
+elif platform.system() == 'Darwin':
+	ONLINE = True
+	USB_ROOT = '/Volumes/cactus/chrome'
+	BUILD_ROOT = '/Volumes/case-sensitive/chrome'
+	SAVE_ROOT = '/Users/andrew/Downloads/chrome'
+
+elif platform.system() == 'Linux':
 	ONLINE = False
 	USB_ROOT = '/media/andrew/cactus/chrome'
 	BUILD_ROOT = os.path.join(os.environ['HOME'], 'chrome')
 	SAVE_ROOT = os.path.join(os.environ['HOME'], 'apks', 'chromium')
+
+else:
+	print('Unsupported platform', file=sys.stderr)
+	exit()
 
 SOURCE_FILES = ['chromium.tgz', 'depot_tools.tgz', 'docker.tar']
 IDB_FILES = ['libmonochrome32.so.i64', 'libmonochrome64.so.i64']
@@ -243,6 +253,14 @@ def download(version):
 		if 'disabled' in shell(f'fsutil.exe file queryCaseSensitiveInfo {BUILD_ROOT}', capture_output=True).stdout.decode():
 			raise Exception(f'{BUILD_ROOT} must be case sensitive')
 
+	# Mac directories are also case insensitive by default
+	if platform.system() == 'Darwin':
+		temp_filename = 'CASE_SENSITIVITY_CHECK'
+		with open(os.path.join(BUILD_ROOT, temp_filename), 'w'):
+			if os.path.exists(os.path.join(BUILD_ROOT, temp_filename.lower())):
+				raise Exception(f'{BUILD_ROOT} must be case sensitive')
+		os.remove(os.path.join(BUILD_ROOT, temp_filename))
+
 	script_src = os.path.join(SCRIPT_DIR, 'download.sh')
 	script_dst = os.path.join(BUILD_ROOT, 'download.sh')
 	shutil.copy(script_src, script_dst)
@@ -318,7 +336,7 @@ if __name__ == '__main__':
 
 	if args.sync:
 		if not os.path.exists(USB_ROOT):
-			print('ERROR: USB directory not found', file=sys.stderr)
+			print('USB directory not found', file=sys.stderr)
 			exit()
 
 		if ONLINE:
