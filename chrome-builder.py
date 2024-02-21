@@ -98,43 +98,6 @@ def fetch_versions(channel, include_old=False):
 
 	return sorted(versions, key=version_key)
 
-def update_version_history(ignore_errors=False):
-	stable_versions = fetch_versions('stable', include_old=True)
-	with open(os.path.join(USB_ROOT, f'versions.json'), 'w') as f:
-		json.dump(stable_versions, f)
-
-def load_version_history():
-	with open(os.path.join(USB_ROOT, f'versions.json')) as f:
-		return json.load(f)
-
-def has_version_history():
-	return os.path.isfile(os.path.join(USB_ROOT, f'versions.json'))
-
-def find_new_stable_versions():
-	version_history = set(load_version_history())
-	saved_versions = set([v for v in os.listdir(SAVE_ROOT) if is_version(v)])
-	stable_versions = saved_versions.intersection(version_history)
-
-	saved_majors = set()
-	for version in stable_versions:
-		saved_majors.add(version_key(version)[0])
-
-	versions_reversed = sorted(version_history, key=version_key, reverse=True)
-	if len(saved_majors) == 0:
-		return [versions_reversed[0]]
-
-	latest_saved_major = sorted(saved_majors)[-1]
-
-	new_versions = []
-	new_majors = set()
-	for version in versions_reversed:
-		major = version_key(version)[0]
-		if major > latest_saved_major and major not in new_majors:
-			new_versions.append(version)
-			new_majors.add(major)
-
-	return new_versions
-
 def collect_versions(default_dir, version=None):
 	versions = []
 	if version is None:
@@ -222,12 +185,7 @@ def copy_usb_apks_to_online(version=None):
 		copy_dir(usb_dir, save_dir)
 
 def download(version):
-	if version == 'stable':
-		stable_versions = load_version_history()
-		version = stable_versions[-1]
-		print(f'Downloading version {version}')
-
-	elif version in ['beta', 'dev', 'canary']:
+	if version in ['stable', 'beta', 'dev', 'canary']:
 		versions = fetch_versions(version, include_old=False)
 		version = versions[-1]
 		print(f'Downloading version {version}')
@@ -322,7 +280,6 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	if ONLINE and args.download:
-		update_version_history()
 		version = download(args.download)
 		if version:
 			copy_online_source_to_usb(version)
