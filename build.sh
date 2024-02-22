@@ -22,6 +22,7 @@ is_official_build=true
 symbol_level=1
 is_component_build=false
 disable_fieldtrial_testing_config=true
+chrome_pgo_phase=0
 EOF
 gn gen out/arm64
 autoninja -C out/arm64 chrome_public_apk monochrome_public_apk monochrome_64_public_apk trichrome_library_32_apk trichrome_chrome_32_bundle trichrome_library_64_apk trichrome_chrome_64_bundle
